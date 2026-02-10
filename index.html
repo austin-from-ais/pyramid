@@ -1,0 +1,752 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>alex is amazing!</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #f5f0e8;
+      overflow: hidden;
+      font-family: 'Courier New', monospace;
+    }
+
+    #narrative-overlay {
+      position: fixed;
+      bottom: 40px;
+      left: 50%;
+      transform: translateX(-50%);
+      max-width: 700px;
+      width: 90%;
+      background: rgba(245, 240, 232, 0.95);
+      border: 1px solid #333;
+      padding: 20px 28px;
+      font-family: 'Courier New', monospace;
+      font-size: 16px;
+      line-height: 1.6;
+      color: #222;
+      z-index: 100;
+      opacity: 0;
+      transition: opacity 0.8s;
+      pointer-events: none;
+    }
+    #narrative-overlay .speaker {
+      font-weight: bold;
+      margin-bottom: 6px;
+      color: #ff69b4;
+    }
+    #narrative-overlay .dialogue-text {
+      min-height: 1.6em;
+    }
+    #narrative-overlay .advance-hint {
+      font-size: 12px;
+      color: #999;
+      margin-top: 10px;
+      animation: blink 1.5s ease-in-out infinite;
+    }
+
+    #title-screen {
+      position: fixed;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: #f5f0e8;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Courier New', monospace;
+      z-index: 200;
+      cursor: pointer;
+      user-select: none;
+    }
+    #title-screen h1 {
+      font-size: 32px;
+      margin-bottom: 8px;
+      color: #222;
+      letter-spacing: 6px;
+    }
+    #title-screen .subtitle {
+      font-size: 14px;
+      color: #999;
+      margin-bottom: 40px;
+      letter-spacing: 2px;
+    }
+    #title-screen .prompt {
+      font-size: 15px;
+      color: #666;
+      animation: blink 1.5s ease-in-out infinite;
+    }
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    #crosshair {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: #ff69b4;
+      font-family: sans-serif;
+      font-size: 20px;
+      z-index: 50;
+      pointer-events: none;
+    }
+
+    #controls-hint {
+      position: fixed;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+      color: #888;
+      z-index: 100;
+      pointer-events: none;
+      transition: opacity 2s;
+    }
+
+    #now-playing {
+      position: fixed;
+      top: 20px;
+      left: 20px;
+      font-family: 'Courier New', monospace;
+      font-size: 13px;
+      color: #555;
+      z-index: 100;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.8s;
+    }
+    #now-playing .np-hearts {
+      color: #ff69b4;
+      font-size: 11px;
+      letter-spacing: 2px;
+      margin-bottom: 4px;
+    }
+    #now-playing .np-label {
+      color: #bbb;
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 3px;
+      margin-bottom: 2px;
+    }
+    #now-playing .np-title {
+      color: #222;
+      font-size: 14px;
+      font-weight: bold;
+    }
+    #now-playing .np-artist {
+      color: #ff69b4;
+      font-size: 12px;
+      margin-top: 1px;
+    }
+    #now-playing .np-bar {
+      margin-top: 6px;
+      display: flex;
+      gap: 3px;
+      align-items: center;
+    }
+    #now-playing .np-bar span {
+      display: inline-block;
+      width: 3px;
+      background: #ff69b4;
+      animation: eqBounce 0.6s ease-in-out infinite alternate;
+    }
+    #now-playing .np-bar span:nth-child(1) { height: 8px; animation-delay: 0s; }
+    #now-playing .np-bar span:nth-child(2) { height: 14px; animation-delay: 0.15s; }
+    #now-playing .np-bar span:nth-child(3) { height: 6px; animation-delay: 0.3s; }
+    #now-playing .np-bar span:nth-child(4) { height: 12px; animation-delay: 0.1s; }
+    #now-playing .np-bar span:nth-child(5) { height: 9px; animation-delay: 0.25s; }
+    @keyframes eqBounce {
+      0% { transform: scaleY(0.3); }
+      100% { transform: scaleY(1); }
+    }
+
+    #hint-message {
+      position: fixed;
+      bottom: 120px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-family: 'Courier New', monospace;
+      font-size: 14px;
+      color: #ff69b4;
+      z-index: 100;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 1.5s;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="title-screen">
+    <h1>a little world just for you &lt;3</h1>
+    <div class="subtitle">i tooooold you i'd make you a pyramid</div>
+    <div class="prompt">[ click to enter ]</div>
+  </div>
+  <div id="crosshair">♥</div>
+  <div id="controls-hint">WASD to move · Mouse to look · Click to talk</div>
+  <div id="now-playing">
+    <div class="np-hearts">♥ ♥ ♥</div>
+    <div class="np-label">now playing</div>
+    <div class="np-title"></div>
+    <div class="np-artist"></div>
+    <div class="np-bar"><span></span><span></span><span></span><span></span><span></span></div>
+  </div>
+  <div id="hint-message"></div>
+  <div id="narrative-overlay">
+    <div class="speaker"></div>
+    <div class="dialogue-text"></div>
+    <div class="advance-hint"></div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script>
+    // ========================================
+    // SCENE
+    // ========================================
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0xf5f0e8);
+
+    const camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 300);
+    camera.position.set(0, 2, 35);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(window.devicePixelRatio);
+    document.body.appendChild(renderer.domElement);
+
+    const lineMat = new THREE.LineBasicMaterial({ color: 0xff69b4 });
+
+    // ========================================
+    // PYRAMID
+    // ========================================
+    const apex = new THREE.Vector3(0, 14, 0);
+    const base = [
+      new THREE.Vector3(-10, 0, -10),
+      new THREE.Vector3( 10, 0, -10),
+      new THREE.Vector3( 10, 0,  10),
+      new THREE.Vector3(-10, 0,  10),
+    ];
+
+    const pyramidPoints = [];
+    for (let i = 0; i < 4; i++) {
+      pyramidPoints.push(base[i], base[(i + 1) % 4]);
+    }
+    for (let i = 0; i < 4; i++) {
+      pyramidPoints.push(base[i], apex);
+    }
+    const hSubs = 20;
+    for (let s = 1; s < hSubs; s++) {
+      const t = s / hSubs;
+      const ring = base.map(b => new THREE.Vector3(
+        b.x + (apex.x - b.x) * t,
+        b.y + (apex.y - b.y) * t,
+        b.z + (apex.z - b.z) * t,
+      ));
+      for (let i = 0; i < 4; i++) {
+        pyramidPoints.push(ring[i], ring[(i + 1) % 4]);
+      }
+    }
+    const vSubs = 10;
+    for (let face = 0; face < 4; face++) {
+      const bl = base[face];
+      const br = base[(face + 1) % 4];
+      for (let v = 1; v < vSubs; v++) {
+        const u = v / vSubs;
+        const bottom = new THREE.Vector3().lerpVectors(bl, br, u);
+        const top = apex.clone();
+        pyramidPoints.push(bottom, top);
+      }
+    }
+
+    const pyramidGeom = new THREE.BufferGeometry().setFromPoints(pyramidPoints);
+    const pyramidLines = new THREE.LineSegments(pyramidGeom, lineMat);
+    scene.add(pyramidLines);
+
+    // ========================================
+    // FLOOR GRID
+    // ========================================
+    const gridSize = 120;
+    const gridStep = 4;
+    const gridPoints = [];
+    for (let i = -gridSize; i <= gridSize; i += gridStep) {
+      gridPoints.push(new THREE.Vector3(-gridSize, 0, i));
+      gridPoints.push(new THREE.Vector3( gridSize, 0, i));
+      gridPoints.push(new THREE.Vector3(i, 0, -gridSize));
+      gridPoints.push(new THREE.Vector3(i, 0,  gridSize));
+    }
+    const gridGeom = new THREE.BufferGeometry().setFromPoints(gridPoints);
+    const gridMat = new THREE.LineBasicMaterial({ color: 0xc0b8a8 });
+    scene.add(new THREE.LineSegments(gridGeom, gridMat));
+
+    // ========================================
+    // AUDIO SYSTEM
+    // ========================================
+    // Simple: one track plays at a time. Talking to a character
+    // crossfades to their track. It stays as the background until
+    // the next character is talked to. At the end, goes back to
+    // background.mp3.
+
+    const bgMusic = new Audio('background.mp3');
+    bgMusic.loop = true;
+    bgMusic.volume = 0.4;
+
+    let currentTrack = bgMusic; // whatever is currently playing
+
+    const songInfo = {
+      'background.mp3': { title: 'Beauty', artist: 'The Shivers' },
+      'kitties.mp3':    { title: 'Butterfly', artist: 'Smile (DDR)' },
+      'selena.mp3':     { title: 'Love You Like a Love Song', artist: 'Selena Gomez' },
+      'sade.mp3':       { title: 'Kiss of Life', artist: 'Sade' },
+      'rebelde.mp3':    { title: 'Entrada de Rebelde', artist: 'Rebelde' },
+      'pancakes.mp3':   { title: 'Poison Flip', artist: 'Berryblue (Leeji Remix)' },
+    };
+
+    const npEl = document.getElementById('now-playing');
+    const npTitle = npEl.querySelector('.np-title');
+    const npArtist = npEl.querySelector('.np-artist');
+
+    function updateNowPlaying(filename) {
+      const info = songInfo[filename];
+      if (info) {
+        npTitle.textContent = info.title;
+        npArtist.textContent = info.artist;
+        npEl.style.opacity = 1;
+      } else {
+        npEl.style.opacity = 0;
+      }
+    }
+
+    function fadeAudio(audio, targetVol, duration = 500) {
+      const steps = 20;
+      const stepTime = duration / steps;
+      const startVol = audio.volume;
+      const delta = (targetVol - startVol) / steps;
+      let step = 0;
+      if (targetVol > 0 && audio.paused) audio.play().catch(() => {});
+      const interval = setInterval(() => {
+        step++;
+        audio.volume = Math.max(0, Math.min(1, startVol + delta * step));
+        if (step >= steps) {
+          clearInterval(interval);
+          if (targetVol === 0) audio.pause();
+        }
+      }, stepTime);
+    }
+
+    function switchTrack(newAudio, filename) {
+      if (newAudio === currentTrack) return;
+      // Fade out old
+      fadeAudio(currentTrack, 0);
+      // Fade in new
+      newAudio.loop = true;
+      newAudio.currentTime = 0;
+      newAudio.volume = 0;
+      newAudio.play().catch(() => {});
+      fadeAudio(newAudio, 0.4);
+      currentTrack = newAudio;
+      updateNowPlaying(filename);
+    }
+
+    // ========================================
+    // CHARACTERS
+    // ========================================
+    const characters = [
+      {
+        name: "Kitties",
+        image: "kitties.png",
+        x: 20, z: 15,
+        scale: 3,
+        radius: 7,
+        music: "kitties.mp3",
+        dialogue: [
+          "[ the kitties are meowing but somehow you can understand their language ]",
+          "miaooo hi alex",
+          "we wanted to come check out your new awesome pyramid nyan~",
+          "i heard that guy who was playing DDR in the arcade made this for you",
+          "we love DDR too!!!!",
+          "purrrr",
+          "wishing you snuggles and fuzzy feelings on valentines day!",
+          "[ the kitties give you a kiss with their wet little nose ]",
+        ],
+      },
+      {
+        name: "Selena",
+        image: "selena.png",
+        x: -18, z: 12,
+        scale: 4,
+        radius: 7,
+        music: "selena.mp3",
+        dialogue: [
+          "omg its you!!!",
+          "the star of rare beauty!!!",
+          "you gotta come by for a photoshoot with me, okay?",
+          "but i don't want you to outshine me!!!",
+          "or ill have to cast a spell on you",
+          "like waverly place",
+          "nice pyramid btw,",
+          "what is that, about eleventeen thousand pounds of bricks?",
+          "ciao!!!",
+        ],
+      },
+      {
+        name: "Sade",
+        image: "sade.png",
+        x: -20, z: -15,
+        scale: 4,
+        radius: 7,
+        music: "sade.mp3",
+        dialogue: [
+          "Hiii Alex,",
+          "omg so good to see you,",
+          "I heard you wanted to come see my concert,",
+          "so I pulled up to ur pyramid to perform for you!!!",
+          "hope you enjoy <3",
+          "happy vday :)",
+        ],
+      },
+      {
+        name: "Mia Colucci",
+        image: "rebelde.png",
+        x: 22, z: -12,
+        scale: 4,
+        radius: 7,
+        music: "rebelde.mp3",
+        dialogue: [
+          "¡O sea, hola güey!",
+          "¿Neta puedes creer que no sepa español?",
+          "Me mandó una cartita para que viniera acá...",
+          "¡Pero la mitad de las palabras eran inventadas!",
+          "¡¿Y empezó diciendo 'bonjour'?! ¡Ay, qué naco!",
+          "Dijo que iban a ver mi show juntos~",
+          "Pero si no aprende español rápido...",
+          "¡¡Que le hable a la mano!!",
+          "Byeeeeee~",
+        ],
+      },
+      {
+        name: "Blueberry Pancakes",
+        image: "pancakes.png",
+        x: 0, z: -25,
+        scale: 3,
+        radius: 7,
+        music: "pancakes.mp3",
+        dialogue: [
+          "[ there is a note attached ]",
+          "hi alex...",
+          "compliments of the hotel",
+          "we spent alllll morning making them",
+          "we hope you enjoy your stay :)",
+        ],
+      },
+    ];
+
+    // ========================================
+    // LOAD CHARACTERS INTO SCENE
+    // ========================================
+    const textureLoader = new THREE.TextureLoader();
+    const talkedTo = new Set();
+
+    characters.forEach((c, idx) => {
+      c._id = idx;
+      c._dialogueIndex = 0;
+      c._done = false;
+
+      if (c.music) {
+        c._audio = new Audio(c.music);
+        c._audio.loop = true;
+        c._audio.volume = 0;
+      }
+
+      textureLoader.load(c.image, (tex) => {
+        const mat = new THREE.SpriteMaterial({ map: tex, transparent: true });
+        const sprite = new THREE.Sprite(mat);
+        const aspect = tex.image.width / tex.image.height;
+        sprite.scale.set(c.scale * aspect, c.scale, 1);
+        sprite.position.set(c.x, c.scale * 0.5, c.z);
+        scene.add(sprite);
+      }, undefined, () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = 256; canvas.height = 256;
+        const ctx = canvas.getContext('2d');
+        ctx.fillStyle = '#ff69b4';
+        ctx.font = 'bold 24px Courier New';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(c.name, 128, 128);
+        const tex = new THREE.CanvasTexture(canvas);
+        const mat = new THREE.SpriteMaterial({ map: tex, transparent: true });
+        const sprite = new THREE.Sprite(mat);
+        sprite.scale.set(c.scale, c.scale, 1);
+        sprite.position.set(c.x, c.scale * 0.5, c.z);
+        scene.add(sprite);
+      });
+    });
+
+    // ========================================
+    // VALENTINE BILLBOARD (hidden until all talked to)
+    // ========================================
+    let valentineBillboard = null;
+    let finalImageBillboard = null;
+
+    // Text billboard
+    (function() {
+      const canvas = document.createElement('canvas');
+      canvas.width = 1024;
+      canvas.height = 256;
+      const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#ff69b4';
+      ctx.font = 'bold 72px Courier New';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('HAPPY VALENTINES DAY!!!', 512, 128);
+
+      const tex = new THREE.CanvasTexture(canvas);
+      const mat = new THREE.SpriteMaterial({ map: tex, transparent: true, opacity: 0 });
+      const sprite = new THREE.Sprite(mat);
+      sprite.scale.set(24, 6, 1);
+      sprite.position.set(0, 20, 0);
+      scene.add(sprite);
+      valentineBillboard = sprite;
+    })();
+
+    // PNG billboard above the text
+    // Replace 'final.png' with your image filename
+    textureLoader.load('final.png', (tex) => {
+      const aspect = tex.image.width / tex.image.height;
+      const mat = new THREE.SpriteMaterial({ map: tex, transparent: true, opacity: 0 });
+      const sprite = new THREE.Sprite(mat);
+      sprite.scale.set(12 * aspect, 12, 1);
+      sprite.position.set(0, 30, 0);
+      scene.add(sprite);
+      finalImageBillboard = sprite;
+    });
+
+    const hintEl = document.getElementById('hint-message');
+
+    function checkAllTalkedTo() {
+      if (talkedTo.size >= characters.length && valentineBillboard) {
+        switchTrack(bgMusic, 'background.mp3');
+
+        hintEl.textContent = 'look at the pyramid!!!';
+        hintEl.style.opacity = 1;
+        setTimeout(() => { hintEl.style.opacity = 0; }, 6000);
+
+        // Fade in both billboards
+        let op = 0;
+        const interval = setInterval(() => {
+          op += 0.02;
+          valentineBillboard.material.opacity = Math.min(1, op);
+          if (finalImageBillboard) finalImageBillboard.material.opacity = Math.min(1, op);
+          if (op >= 1) clearInterval(interval);
+        }, 30);
+      }
+    }
+
+    // ========================================
+    // CONTROLS
+    // ========================================
+    const keys = {};
+    let yaw = 0;
+    let pitch = 0;
+    let isLocked = false;
+    const moveSpeed = 0.15;
+    const lookSpeed = 0.002;
+
+    function requestLock() { document.body.requestPointerLock(); }
+
+    document.addEventListener('pointerlockchange', () => {
+      isLocked = document.pointerLockElement === document.body;
+    });
+
+    document.addEventListener('mousemove', (e) => {
+      if (!isLocked) return;
+      yaw -= e.movementX * lookSpeed;
+      pitch -= e.movementY * lookSpeed;
+      pitch = Math.max(-Math.PI / 3, Math.min(Math.PI / 3, pitch));
+    });
+
+    document.addEventListener('keydown', (e) => { keys[e.code] = true; });
+    document.addEventListener('keyup', (e) => { keys[e.code] = false; });
+
+    function updateMovement() {
+      if (!isLocked) return;
+      const forward = new THREE.Vector3(-Math.sin(yaw), 0, -Math.cos(yaw));
+      const right = new THREE.Vector3(Math.cos(yaw), 0, -Math.sin(yaw));
+
+      if (keys['KeyW'] || keys['ArrowUp']) camera.position.addScaledVector(forward, moveSpeed);
+      if (keys['KeyS'] || keys['ArrowDown']) camera.position.addScaledVector(forward, -moveSpeed);
+      if (keys['KeyA'] || keys['ArrowLeft']) camera.position.addScaledVector(right, -moveSpeed);
+      if (keys['KeyD'] || keys['ArrowRight']) camera.position.addScaledVector(right, moveSpeed);
+
+      camera.position.y = 2;
+      camera.quaternion.setFromEuler(new THREE.Euler(pitch, yaw, 0, 'YXZ'));
+    }
+
+    // ========================================
+    // DIALOGUE SYSTEM
+    // ========================================
+    const narrativeEl = document.getElementById('narrative-overlay');
+    const speakerEl = narrativeEl.querySelector('.speaker');
+    const dialogueTextEl = narrativeEl.querySelector('.dialogue-text');
+    const advanceHintEl = narrativeEl.querySelector('.advance-hint');
+    const titleScreen = document.getElementById('title-screen');
+    const controlsHint = document.getElementById('controls-hint');
+
+    let activeCharacter = null;
+    let typewriterTimeout = null;
+    let typewriterDone = false;
+    let fullText = '';
+
+    function typewrite(el, text, speed = 25) {
+      if (typewriterTimeout) clearTimeout(typewriterTimeout);
+      fullText = text;
+      typewriterDone = false;
+      el.textContent = '';
+      advanceHintEl.textContent = '';
+      let i = 0;
+      function tick() {
+        if (i < text.length) {
+          el.textContent += text[i];
+          i++;
+          typewriterTimeout = setTimeout(tick, speed);
+        } else {
+          typewriterDone = true;
+          if (activeCharacter) {
+            const isLast = activeCharacter._dialogueIndex >= activeCharacter.dialogue.length - 1;
+            advanceHintEl.textContent = isLast ? '[ click to close ]' : '[ click to continue ]';
+          }
+        }
+      }
+      tick();
+    }
+
+    function showDialogueLine(char) {
+      const line = char.dialogue[char._dialogueIndex];
+      speakerEl.textContent = char.name;
+      typewrite(dialogueTextEl, line);
+      narrativeEl.style.opacity = 1;
+    }
+
+    function startDialogue(char) {
+      if (char._done) return;
+      activeCharacter = char;
+      char._dialogueIndex = 0;
+      showDialogueLine(char);
+      // Switch to character's track (stays as background after)
+      if (char._audio && char.music) {
+        switchTrack(char._audio, char.music);
+      }
+    }
+
+    function advanceDialogue() {
+      if (!activeCharacter) return;
+
+      if (!typewriterDone) {
+        if (typewriterTimeout) clearTimeout(typewriterTimeout);
+        dialogueTextEl.textContent = fullText;
+        typewriterDone = true;
+        const isLast = activeCharacter._dialogueIndex >= activeCharacter.dialogue.length - 1;
+        advanceHintEl.textContent = isLast ? '[ click to close ]' : '[ click to continue ]';
+        return;
+      }
+
+      activeCharacter._dialogueIndex++;
+
+      if (activeCharacter._dialogueIndex >= activeCharacter.dialogue.length) {
+        activeCharacter._done = true;
+        talkedTo.add(activeCharacter._id);
+        closeDialogue();
+        checkAllTalkedTo();
+      } else {
+        showDialogueLine(activeCharacter);
+      }
+    }
+
+    function closeDialogue() {
+      activeCharacter = null;
+      narrativeEl.style.opacity = 0;
+      speakerEl.textContent = '';
+      dialogueTextEl.textContent = '';
+      advanceHintEl.textContent = '';
+      // Music keeps playing — no fade out
+    }
+
+    // ========================================
+    // PROXIMITY + CLICK HANDLING
+    // ========================================
+    let nearestChar = null;
+
+    function updateProximity() {
+      const p = camera.position.clone();
+      p.y = 0;
+
+      let closest = null;
+      let closestDist = Infinity;
+
+      for (const c of characters) {
+        const charPos = new THREE.Vector3(c.x, 0, c.z);
+        const d = p.distanceTo(charPos);
+        if (d < c.radius && d < closestDist) {
+          closestDist = d;
+          closest = c;
+        }
+      }
+
+      nearestChar = closest;
+
+      if (activeCharacter && nearestChar !== activeCharacter) {
+        closeDialogue();
+      }
+
+      if (nearestChar && !nearestChar._done && !activeCharacter) {
+        startDialogue(nearestChar);
+      }
+    }
+
+    document.addEventListener('mousedown', (e) => {
+      if (titleScreen.style.display !== 'none') return;
+
+      if (activeCharacter) {
+        advanceDialogue();
+      } else if (!isLocked) {
+        requestLock();
+      }
+    });
+
+    // ========================================
+    // LOOP
+    // ========================================
+    titleScreen.addEventListener('click', () => {
+      titleScreen.style.display = 'none';
+      requestLock();
+      bgMusic.play().catch(() => {});
+      currentTrack = bgMusic;
+      updateNowPlaying('background.mp3');
+
+      // Show opening hint
+      hintEl.textContent = 'talk to all the characters for a surprise <3';
+      hintEl.style.opacity = 1;
+      setTimeout(() => { hintEl.style.opacity = 0; }, 6000);
+
+      setTimeout(() => { controlsHint.style.opacity = 0; }, 6000);
+    });
+
+    function animate() {
+      requestAnimationFrame(animate);
+      updateMovement();
+      updateProximity();
+      renderer.render(scene, camera);
+    }
+    animate();
+
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+  </script>
+</body>
+</html>
