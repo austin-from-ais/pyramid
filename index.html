@@ -486,6 +486,67 @@
     });
 
     // ========================================
+    // FALLING HEARTS
+    // ========================================
+    const hearts = [];
+    let heartsActive = false;
+
+    function makeHeart() {
+      const canvas = document.createElement('canvas');
+      canvas.width = 64;
+      canvas.height = 64;
+      const ctx = canvas.getContext('2d');
+      ctx.font = '48px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('♥', 32, 32);
+      return new THREE.CanvasTexture(canvas);
+    }
+
+    const heartTex = makeHeart();
+
+    function spawnHeart() {
+      const mat = new THREE.SpriteMaterial({ map: heartTex, transparent: true, color: 0xff69b4, opacity: 0.8 });
+      const sprite = new THREE.Sprite(mat);
+      const s = 0.5 + Math.random() * 1.5;
+      sprite.scale.set(s, s, 1);
+      sprite.position.set(
+        camera.position.x + (Math.random() - 0.5) * 60,
+        25 + Math.random() * 15,
+        camera.position.z + (Math.random() - 0.5) * 60,
+      );
+      scene.add(sprite);
+      hearts.push({
+        sprite,
+        speed: 0.02 + Math.random() * 0.04,
+        drift: (Math.random() - 0.5) * 0.02,
+        spin: (Math.random() - 0.5) * 0.01,
+      });
+    }
+
+    function updateHearts() {
+      if (!heartsActive) return;
+      // Spawn new hearts
+      if (hearts.length < 80 && Math.random() < 0.3) {
+        spawnHeart();
+      }
+      // Update existing
+      for (let i = hearts.length - 1; i >= 0; i--) {
+        const h = hearts[i];
+        h.sprite.position.y -= h.speed;
+        h.sprite.position.x += h.drift;
+        if (h.sprite.position.y < 0) {
+          scene.remove(h.sprite);
+          hearts.splice(i, 1);
+        }
+      }
+    }
+
+    function startHearts() {
+      heartsActive = true;
+    }
+
+    // ========================================
     // VALENTINE BILLBOARD (hidden until all talked to)
     // ========================================
     let valentineBillboard = null;
@@ -542,6 +603,8 @@
           if (finalImageBillboard) finalImageBillboard.material.opacity = Math.min(1, op);
           if (op >= 1) clearInterval(interval);
         }, 30);
+
+        startHearts();
       }
     }
 
@@ -738,6 +801,7 @@
       requestAnimationFrame(animate);
       updateMovement();
       updateProximity();
+      updateHearts();
       renderer.render(scene, camera);
     }
     animate();
