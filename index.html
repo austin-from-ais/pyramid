@@ -506,7 +506,7 @@
     const heartTex = makeHeart();
 
     function spawnHeart() {
-      const mat = new THREE.SpriteMaterial({ map: heartTex, transparent: true, color: 0xff69b4, opacity: 0.8 });
+      const mat = new THREE.SpriteMaterial({ map: heartTex, transparent: true, color: 0xff0000, opacity: 0.8 });
       const sprite = new THREE.Sprite(mat);
       const s = 0.5 + Math.random() * 1.5;
       sprite.scale.set(s, s, 1);
