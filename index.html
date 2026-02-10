@@ -496,6 +496,7 @@
       canvas.width = 64;
       canvas.height = 64;
       const ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#ff0000';
       ctx.font = '48px sans-serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
@@ -506,7 +507,7 @@
     const heartTex = makeHeart();
 
     function spawnHeart() {
-      const mat = new THREE.SpriteMaterial({ map: heartTex, transparent: true, color: 0xff0000, opacity: 0.8 });
+      const mat = new THREE.SpriteMaterial({ map: heartTex, transparent: true, opacity: 0.8 });
       const sprite = new THREE.Sprite(mat);
       const s = 0.5 + Math.random() * 1.5;
       sprite.scale.set(s, s, 1);
